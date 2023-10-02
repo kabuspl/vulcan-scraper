@@ -145,6 +145,43 @@ export class VulcanHandler {
         }
     }
 
+    async getStudentGrades() {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
+        // Get data from vulcan
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Oceny.mvc/Get", { okres: this.getCurrentPeriod(this.#register).Id })).json();
+
+        const returnBuilder = {}
+        // Iterate through every subject and convert it to better data format
+        for(const subject of resp.data.Oceny) {
+            const grades = subject.OcenyCzastkowe;
+            returnBuilder[subject.Przedmiot] = {
+                average: subject.Srednia,
+                grades: []
+            }
+            for(const grade of grades) {
+                // Convert dd.mm.yyyy to js Date()
+                const dateSplit = grade.DataOceny.split(".");
+                const date = new Date();
+                date.setFullYear(dateSplit[2]);
+                date.setMonth(dateSplit[1]-1);
+                date.setDate(dateSplit[0]);
+
+                // Push grade to array
+                returnBuilder[subject.Przedmiot].grades.push({
+                    teacher: grade.Nauczyciel,
+                    grade: grade.Wpis,
+                    weight: grade.Waga,
+                    description: grade.NazwaKolumny,
+                    code: grade.KodKolumny,
+                    date,
+                    color: grade.KolorOceny
+                })
+            }
+        }
+        return returnBuilder;
+    }
+
     /**
      * Gets class grades for current period (semester)
      * @returns {object} Class grades
