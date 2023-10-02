@@ -1,6 +1,6 @@
 import makeFetchCookie from 'fetch-cookie';
 import { parse } from 'node-html-parser';
-import { AlreadyLoggedInError, NotLoggedInError } from './errors.js';
+import { AlreadyLoggedInError, NotLoggedInError, WrongCredentialsError } from './errors.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 // const fetch = wrapFetch({ cookieJar });
@@ -63,6 +63,9 @@ export class VulcanHandler {
 
         // Parse html from response
         const parsedDom = parse(await request.text());
+
+        // If document title is not "Working..." credentials are wrong
+        if(parsedDom.querySelector("title").textContent != "Working...") throw new WrongCredentialsError();
 
         // Extract values from html form fields
         const wa = parsedDom.querySelector("[name='wa']").getAttribute("value");
