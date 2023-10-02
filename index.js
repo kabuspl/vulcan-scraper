@@ -29,6 +29,7 @@ export class VulcanHandler {
     #username;
     #password;
     #loggedIn = false;
+    #refreshSessionInterval;
 
     /**
      * Creates VulcanHandler. After creating call .login() before doing anything else.
@@ -119,13 +120,23 @@ export class VulcanHandler {
 
         this.#register = currentRegister;
         this.#loggedIn = true;
+
+        // Refresh session every 900 sec (15 min)
+        this.#refreshSessionInterval = setInterval(()=>{this.refreshSession()}, 900);
     }
 
     async logout() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
+        clearInterval(this.#refreshSessionInterval);
         await cookieJar.removeAllCookies();
         this.#loggedIn = false;
+    }
+
+    async refreshSession() {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
+        await fetchCookie("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Home.mvc/RefreshSession?_dc="+parseInt(new Date().getTime()/1000));
     }
 
     /**
