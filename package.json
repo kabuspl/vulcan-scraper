@@ -1,0 +1,30 @@
+{
+  "name": "vulcan-scraper",
+  "version": "1.0.0",
+  "description": "Small library to scrape Vulcan e-register",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kabuspl/vulcan-scraper.git"
+  },
+  "keywords": [
+    "uonet",
+    "uonetplus",
+    "vulcan",
+    "scraper"
+  ],
+  "author": "kabus",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/kabuspl/vulcan-scraper/issues"
+  },
+  "homepage": "https://github.com/kabuspl/vulcan-scraper#readme",
+  "dependencies": {
+    "fetch-cookie": "^2.1.0",
+    "node-html-parser": "^6.1.10"
+  },
+  "type": "module"
+}
