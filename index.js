@@ -1,5 +1,6 @@
 import makeFetchCookie from 'fetch-cookie';
 import { parse } from 'node-html-parser';
+import { AlreadyLoggedInError, NotLoggedInError } from './errors.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 // const fetch = wrapFetch({ cookieJar });
@@ -27,6 +28,7 @@ export class VulcanHandler {
     #register;
     #username;
     #password;
+    #loggedIn = false;
 
     /**
      * Creates VulcanHandler. After creating call .login() before doing anything else.
@@ -44,6 +46,8 @@ export class VulcanHandler {
      * Log in to vulcan
      */
     async login() {
+        if(this.#loggedIn) throw new AlreadyLoggedInError();
+
         const baseLoginUrl = "https://cufs.vulcan.net.pl/{symbol}/Account/LogOn?ReturnUrl=%2F{symbol}%2FFS%2FLS%3Fwa%3Dwsignin1.0%26wtrealm%3Dhttps%253A%252F%252Feduone.pl%252F{symbol}%252FLoginEndpoint.aspx%26wctx%3Dhttps%253A%252F%252Feduone.pl%252F{symbol}%252FLoginEndpoint.aspx";
         // Replace {symbol} with user provided symbol
         const currentLoginUrl = baseLoginUrl.replaceAll("{symbol}", this.#symbol);
@@ -111,6 +115,14 @@ export class VulcanHandler {
         }), "https://uonetplus-uczen.vulcan.net.pl");
 
         this.#register = currentRegister;
+        this.#loggedIn = true;
+    }
+
+    async logout() {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
+        await cookieJar.removeAllCookies();
+        this.#loggedIn = false;
     }
 
     /**
@@ -118,6 +130,8 @@ export class VulcanHandler {
      * @returns {object} Period object.
      */
     getCurrentPeriod() {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
         // Iterate through every period in register and check which includes today's date. Then return it.
         for(const period of this.#register.Okresy) {
             const from = new Date(period.DataOd).getTime();
@@ -133,6 +147,8 @@ export class VulcanHandler {
      * @returns {object} Class grades
      */
     async getClassGrades() {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
         // Get data from vulcan
         const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod(this.#register).Id })).json();
 
