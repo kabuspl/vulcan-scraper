@@ -50,12 +50,16 @@ export class VulcanHandler {
     async login() {
         if(this.#loggedIn) throw new AlreadyLoggedInError();
 
-        const baseLoginUrl = "https://cufs.vulcan.net.pl/{symbol}/Account/LogOn?ReturnUrl=%2F{symbol}%2FFS%2FLS%3Fwa%3Dwsignin1.0%26wtrealm%3Dhttps%253A%252F%252Feduone.pl%252F{symbol}%252FLoginEndpoint.aspx%26wctx%3Dhttps%253A%252F%252Feduone.pl%252F{symbol}%252FLoginEndpoint.aspx";
-        // Replace {symbol} with user provided symbol
-        const currentLoginUrl = baseLoginUrl.replaceAll("{symbol}", this.#symbol);
+        // Request login page and get url from redirection
+        const baseLoginPageUrl = "https://uonetplus.vulcan.net.pl/{symbol}/LoginEndpoint.aspx";
+        const loginPageRequest = await fetchCookie(baseLoginPageUrl.replaceAll("{symbol}", this.#symbol));
+        // Just wait for request completion. Idk if there is any better way
+        await loginPageRequest.status;
+
+        const loginEndpointUrl = loginPageRequest.url;
 
         // Start logging in
-        const request = await fetchCookie(currentLoginUrl, {
+        const loginStep1Request = await fetchCookie(loginEndpointUrl, {
             method: "POST",
             body: new URLSearchParams({
                 LoginName: this.#username,
@@ -64,18 +68,18 @@ export class VulcanHandler {
         });
 
         // Parse html from response
-        const parsedDom = parse(await request.text());
+        const loginStep1ParsedDom = parse(await loginStep1Request.text());
 
         // If document title is not "Working..." credentials are wrong
-        if(parsedDom.querySelector("title").textContent != "Working...") throw new WrongCredentialsError();
+        if(loginStep1ParsedDom.querySelector("title").textContent != "Working...") throw new WrongCredentialsError();
 
         // Extract values from html form fields
-        const wa = parsedDom.querySelector("[name='wa']").getAttribute("value");
-        const wresult = parsedDom.querySelector("[name='wresult']").getAttribute("value");
-        const wctx = parsedDom.querySelector("[name='wctx']").getAttribute("value");
+        const wa = loginStep1ParsedDom.querySelector("[name='wa']").getAttribute("value");
+        let wresult = loginStep1ParsedDom.querySelector("[name='wresult']").getAttribute("value");
+        const wctx = loginStep1ParsedDom.querySelector("[name='wctx']").getAttribute("value");
 
-        // Finish logging in
-        const finalRequest = await fetchCookie("https://uonetplus.vulcan.net.pl/"+this.#symbol+"/LoginEndpoint.aspx", {
+        // POST extracted values to form action url
+        const loginStep2Request = await fetchCookie(loginStep1ParsedDom.querySelector("form").getAttribute("action"), {
             method: "POST",
             body: new URLSearchParams({
                 wa,
@@ -85,10 +89,26 @@ export class VulcanHandler {
         });
 
         // Parse html from response
-        const finalParsedDom = parse(await finalRequest.text());
+        const loginStep2ParsedDom = parse(await loginStep2Request.text());
+
+        // Get new wresult value. Other values are the same
+        wresult = loginStep2ParsedDom.querySelector("[name='wresult']").getAttribute("value");
+
+        // POST extracted values to form action url once again
+        const loginFinalStepRequest = await fetchCookie(loginStep2ParsedDom.querySelector("form").getAttribute("action"), {
+            method: "POST",
+            body: new URLSearchParams({
+                wa,
+                wresult,
+                wctx
+            })
+        });
+
+        // Parse html from response
+        const loginFinalStepParsedDom = parse(await loginFinalStepRequest.text());
 
         //Extract school symbol from html
-        const schoolSymbol = finalParsedDom.querySelector("a[title='Uczeń']").getAttribute("href").split("/")[4];
+        const schoolSymbol = loginFinalStepParsedDom.querySelector("a[title='Uczeń']").getAttribute("href").split("/")[4];
         this.#schoolSymbol = schoolSymbol;
 
         // Get register list
