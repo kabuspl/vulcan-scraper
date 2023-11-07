@@ -1,4 +1,7 @@
 # vulcan-scraper
+![npm](https://img.shields.io/npm/v/vulcan-scraper)
+![npm](https://img.shields.io/npm/dw/vulcan-scraper)
+
 Small library to scrape Vulcan e-register
 
 ## Example
