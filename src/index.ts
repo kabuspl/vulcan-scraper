@@ -6,6 +6,7 @@ import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
 import { Grades, GradesResponse } from './grades.js';
+import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './classGrades.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -235,9 +236,9 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id })).json() as VulcanResponse<any>;
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id })).json() as VulcanResponse<SubjectClassGradesResponse[]>;
 
-        const returnBuilder = {}
+        const returnBuilder: ClassGrades = {}
         // Iterate through every subject and convert it to better data format
         for(const subject of resp.data) {
             const classSeries = subject.ClassSeries;
