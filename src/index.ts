@@ -11,11 +11,11 @@ const fetchCookie = makeFetchCookie(fetch, cookieJar)
 
 /**
  * Post json data to url.
- * @param {string} url - Url to fetch.
- * @param {object} json - Object to convert to json and post.
+ * @param url - Url to fetch.
+ * @param json - Object to convert to json and post.
  * @returns Same promise that fetch would normally return.
  */
-function postJSON(url, json) {
+function postJSON(url: string, json: object) {
     return fetchCookie(url, {
         method: "POST",
         headers: {
