@@ -3,11 +3,10 @@ import { parse } from 'node-html-parser';
 import { AlreadyLoggedInError, NotLoggedInError, WrongCredentialsError } from './errors.js';
 import { StudentGuardian, StudentInfo } from './student.js';
 import { URLSearchParams } from "url";
-import { RegisterResponse } from './register.js';
+import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
-// const fetch = wrapFetch({ cookieJar });
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
 
 /**
@@ -29,7 +28,7 @@ function postJSON(url, json) {
 export class VulcanHandler {
     #symbol;
     #schoolSymbol;
-    #register;
+    #register: RegisterResponse;
     #username;
     #password;
     #loggedIn = false;
@@ -37,11 +36,11 @@ export class VulcanHandler {
 
     /**
      * Creates VulcanHandler. After creating call .login() before doing anything else.
-     * @param {string} username - Username used to login to uonet.
-     * @param {string} password - Password used to login to uonet.
-     * @param {string} symbol - Symbol from login page url.
+     * @param username - Username used to login to uonet.
+     * @param password - Password used to login to uonet.
+     * @param symbol - Symbol from login page url.
      */
-    constructor(username, password, symbol) {
+    constructor(username: string, password: string, symbol: string) {
         this.#username = username;
         this.#password = password;
         this.#symbol = symbol;
@@ -165,9 +164,9 @@ export class VulcanHandler {
 
     /**
      * Gets current period from register.
-     * @returns {object} Period object.
+     * @returns Period object.
      */
-    getCurrentPeriod() {
+    getCurrentPeriod(): PeriodResponse {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Iterate through every period in register and check which includes today's date. Then return it.
@@ -219,7 +218,7 @@ export class VulcanHandler {
 
     /**
      * Gets class grades for current period (semester)
-     * @returns {object} Class grades
+     * @returns Class grades
      */
     async getClassGrades() {
         if(!this.#loggedIn) throw new NotLoggedInError();
@@ -261,6 +260,10 @@ export class VulcanHandler {
         return returnBuilder;
     }
 
+    /**
+     * Get student information from register
+     * @returns Information about current student and his parents/guardians
+     */
     async getStudentInfo() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
