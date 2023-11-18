@@ -148,6 +148,9 @@ export class VulcanHandler {
         this.#refreshSessionInterval = setInterval(()=>{this.refreshSession()}, 900);
     }
 
+    /**
+     * Log out from Vulcan
+     */
     async logout() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
@@ -156,6 +159,9 @@ export class VulcanHandler {
         this.#loggedIn = false;
     }
 
+    /**
+     * Refreshes Vulcan session to prevent automatic logout.
+     */
     async refreshSession() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
@@ -179,6 +185,10 @@ export class VulcanHandler {
         }
     }
 
+    /**
+     * Get student grades for current period (semester)
+     * @returns Student grades
+     */
     async getStudentGrades() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
