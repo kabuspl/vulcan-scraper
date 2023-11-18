@@ -1,19 +1,23 @@
 import makeFetchCookie from 'fetch-cookie';
 import { parse } from 'node-html-parser';
 import { AlreadyLoggedInError, NotLoggedInError, WrongCredentialsError } from './errors.js';
-import { StudentGuardian, StudentInfo } from './student.js';
+import { StudentGuardian, StudentInfo, StudentInfoRepsonse } from './student.js';
+import { URLSearchParams } from "url";
+import { PeriodResponse, RegisterResponse } from './register.js';
+import { VulcanResponse } from './response.js';
+import { Grades, GradesResponse } from './grades.js';
+import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './classGrades.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
-// const fetch = wrapFetch({ cookieJar });
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
 
 /**
  * Post json data to url.
- * @param {string} url - Url to fetch.
- * @param {object} json - Object to convert to json and post.
+ * @param url - Url to fetch.
+ * @param json - Object to convert to json and post.
  * @returns Same promise that fetch would normally return.
  */
-function postJSON(url, json) {
+function postJSON(url: string, json: object) {
     return fetchCookie(url, {
         method: "POST",
         headers: {
@@ -26,7 +30,7 @@ function postJSON(url, json) {
 export class VulcanHandler {
     #symbol;
     #schoolSymbol;
-    #register;
+    #register: RegisterResponse;
     #username;
     #password;
     #loggedIn = false;
@@ -34,11 +38,11 @@ export class VulcanHandler {
 
     /**
      * Creates VulcanHandler. After creating call .login() before doing anything else.
-     * @param {string} username - Username used to login to uonet.
-     * @param {string} password - Password used to login to uonet.
-     * @param {string} symbol - Symbol from login page url.
+     * @param username - Username used to login to uonet.
+     * @param password - Password used to login to uonet.
+     * @param symbol - Symbol from login page url.
      */
-    constructor(username, password, symbol) {
+    constructor(username: string, password: string, symbol: string) {
         this.#username = username;
         this.#password = password;
         this.#symbol = symbol;
@@ -51,7 +55,7 @@ export class VulcanHandler {
         if(this.#loggedIn) throw new AlreadyLoggedInError();
 
         // Request login page and get url from redirection
-        const baseLoginPageUrl = "https://uonetplus.vulcan.net.pl/{symbol}/LoginEndpoint.aspx";
+        const baseLoginPageUrl: string = "https://uonetplus.vulcan.net.pl/{symbol}/LoginEndpoint.aspx";
         const loginPageRequest = await fetchCookie(baseLoginPageUrl.replaceAll("{symbol}", this.#symbol));
         // Just wait for request completion. Idk if there is any better way
         await loginPageRequest.status;
@@ -112,7 +116,7 @@ export class VulcanHandler {
         this.#schoolSymbol = schoolSymbol;
 
         // Get register list
-        const registerList = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/UczenDziennik.mvc/Get", {})).json();
+        const registerList = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/UczenDziennik.mvc/Get", {})).json() as VulcanResponse<RegisterResponse>;
 
         // 0 is always newest register
         const currentRegister = registerList.data[0];
@@ -146,6 +150,9 @@ export class VulcanHandler {
         this.#refreshSessionInterval = setInterval(()=>{this.refreshSession()}, 900);
     }
 
+    /**
+     * Log out from Vulcan
+     */
     async logout() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
@@ -154,17 +161,20 @@ export class VulcanHandler {
         this.#loggedIn = false;
     }
 
+    /**
+     * Refreshes Vulcan session to prevent automatic logout.
+     */
     async refreshSession() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
-        await fetchCookie("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Home.mvc/RefreshSession?_dc="+parseInt(new Date().getTime()/1000));
+        await fetchCookie("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Home.mvc/RefreshSession?_dc="+Math.floor(new Date().getTime()/1000));
     }
 
     /**
      * Gets current period from register.
-     * @returns {object} Period object.
+     * @returns Period object.
      */
-    getCurrentPeriod() {
+    getCurrentPeriod(): PeriodResponse {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Iterate through every period in register and check which includes today's date. Then return it.
@@ -177,13 +187,17 @@ export class VulcanHandler {
         }
     }
 
+    /**
+     * Get student grades for current period (semester)
+     * @returns Student grades
+     */
     async getStudentGrades() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Oceny.mvc/Get", { okres: this.getCurrentPeriod(this.#register).Id })).json();
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id })).json() as VulcanResponse<GradesResponse>;
 
-        const returnBuilder = {}
+        const returnBuilder: Grades = {}
         // Iterate through every subject and convert it to better data format
         for(const subject of resp.data.Oceny) {
             const grades = subject.OcenyCzastkowe;
@@ -195,9 +209,9 @@ export class VulcanHandler {
                 // Convert dd.mm.yyyy to js Date()
                 const dateSplit = grade.DataOceny.split(".");
                 const date = new Date();
-                date.setFullYear(dateSplit[2]);
-                date.setMonth(dateSplit[1]-1);
-                date.setDate(dateSplit[0]);
+                date.setFullYear(parseInt(dateSplit[2]));
+                date.setMonth(parseInt(dateSplit[1])-1);
+                date.setDate(parseInt(dateSplit[0]));
 
                 // Push grade to array
                 returnBuilder[subject.Przedmiot].grades.push({
@@ -216,15 +230,15 @@ export class VulcanHandler {
 
     /**
      * Gets class grades for current period (semester)
-     * @returns {object} Class grades
+     * @returns Class grades
      */
     async getClassGrades() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod(this.#register).Id })).json();
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id })).json() as VulcanResponse<SubjectClassGradesResponse[]>;
 
-        const returnBuilder = {}
+        const returnBuilder: ClassGrades = {}
         // Iterate through every subject and convert it to better data format
         for(const subject of resp.data) {
             const classSeries = subject.ClassSeries;
@@ -258,48 +272,55 @@ export class VulcanHandler {
         return returnBuilder;
     }
 
+    /**
+     * Get student information from register
+     * @returns Information about current student and his parents/guardians
+     */
     async getStudentInfo() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Uczen.mvc/Get", {})).json();
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Uczen.mvc/Get", {})).json() as VulcanResponse<StudentInfoRepsonse>;
 
-        const studentInfo = new StudentInfo();
-        studentInfo.name = resp.data.Imie;
-        studentInfo.middleName = resp.data.Imie2;
-        studentInfo.lastName = resp.data.Nazwisko;
-        studentInfo.familyName = resp.data.NazwiskoRodowe;
-        studentInfo.fullName = resp.data.ImieNazwisko;
-        studentInfo.birthDate = new Date(resp.data.DataUrodzenia.replace(" ", "T")+"Z");
-        studentInfo.birthPlace = resp.data.MiejsceUrodzenia;
-        studentInfo.polishCitizenship = Boolean(resp.data.ObywatelstwoPolskie);
-        studentInfo.gender = resp.data.Plec ? "male" : "female";
-        studentInfo.address = resp.data.AdresZamieszkania;
-        studentInfo.registeredAddress = resp.data.AdresZameldowania;
-        studentInfo.correspondenceAddress = resp.data.AdresKorespondencji;
-        studentInfo.homePhone = resp.data.TelDomowy;
-        studentInfo.phone = resp.data.TelKomorkowy;
-        studentInfo.email = resp.data.Email;
-        studentInfo.isPeselVisible = resp.data.CzyWidocznyPesel;
-        studentInfo.isAddressVisible = !resp.data.UkryteDaneAdresowe;
-        studentInfo.isPhotoVisivle = resp.data.ShowPhoto;
-        studentInfo.hasPesel = resp.data.PosiadaPesel;
-        studentInfo.isPole = resp.data.Polak;
+        const studentInfo: StudentInfo = {
+            name: resp.data.Imie,
+            middleName: resp.data.Imie2,
+            lastName: resp.data.Nazwisko,
+            familyName: resp.data.NazwiskoRodowe,
+            fullName: resp.data.ImieNazwisko,
+            birthDate: new Date(resp.data.DataUrodzenia.replace(" ", "T")+"Z"),
+            birthPlace: resp.data.MiejsceUrodzenia,
+            hasPolishCitizenship: Boolean(resp.data.ObywatelstwoPolskie),
+            gender: resp.data.Plec ? "male" : "female",
+            address: resp.data.AdresZamieszkania,
+            registeredAddress: resp.data.AdresZameldowania,
+            correspondenceAddress: resp.data.AdresKorespondencji,
+            homePhone: resp.data.TelDomowy,
+            phone: resp.data.TelKomorkowy,
+            email: resp.data.Email,
+            isPeselVisible: resp.data.CzyWidocznyPesel,
+            isAddressVisible: !resp.data.UkryteDaneAdresowe,
+            isPhotoVisivle: resp.data.ShowPhoto,
+            hasPesel: resp.data.PosiadaPesel,
+            isPole: resp.data.Polak,
+            guardians: []
+        }
 
         for(let i = 1; i <=2; i++) {
             const guardianData = resp.data["Opiekun"+i];
-            const guardian = new StudentGuardian();
-            guardian.id = guardianData.Id;
-            guardian.name = guardianData.Imie;
-            guardian.lastName = guardianData.Nazwisko;
-            guardian.kinship = guardianData.StPokrewienstwa;
-            guardian.address = guardianData.Adres == "Taki sam jak ucznia" ? studentInfo.address : guardianData.Adres;
-            guardian.homePhone = guardianData.TelDomowy;
-            guardian.cellPhone = guardianData.TelKomorkowy;
-            guardian.workPhone = guardianData.TelSluzbowy;
-            guardian.email = guardianData.Email;
-            guardian.fullName = guardianData.FullName;
-            guardian.phone = guardianData.Telefon;
+            const guardian: StudentGuardian = {
+                id: guardianData.Id,
+                name: guardianData.Imie,
+                lastName: guardianData.Nazwisko,
+                kinship: guardianData.StPokrewienstwa,
+                address: guardianData.Adres == "Taki sam jak ucznia" ? studentInfo.address : guardianData.Adres,
+                homePhone: guardianData.TelDomowy,
+                cellPhone: guardianData.TelKomorkowy,
+                workPhone: guardianData.TelSluzbowy,
+                email: guardianData.Email,
+                fullName: guardianData.FullName,
+                phone: guardianData.Telefon
+            }
             studentInfo.guardians.push(guardian);
         }
 

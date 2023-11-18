@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "outDir": "dist",
+      "allowJs": true,
+      "target": "ES6",
+      "declaration": true,
+      "esModuleInterop": true,
+      "lib": ["ES2023"],
+      "moduleResolution": "NodeNext",
+      "module": "NodeNext"
+    },
+    "include": ["./src/**/*"]
+  }
