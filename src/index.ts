@@ -5,6 +5,7 @@ import { StudentGuardian, StudentInfo, StudentInfoRepsonse } from './student.js'
 import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
+import { Grades, GradesResponse } from './grades.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -193,9 +194,9 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id })).json() as VulcanResponse<any>;
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id })).json() as VulcanResponse<GradesResponse>;
 
-        const returnBuilder = {}
+        const returnBuilder: Grades = {}
         // Iterate through every subject and convert it to better data format
         for(const subject of resp.data.Oceny) {
             const grades = subject.OcenyCzastkowe;
@@ -207,9 +208,9 @@ export class VulcanHandler {
                 // Convert dd.mm.yyyy to js Date()
                 const dateSplit = grade.DataOceny.split(".");
                 const date = new Date();
-                date.setFullYear(dateSplit[2]);
-                date.setMonth(dateSplit[1]-1);
-                date.setDate(dateSplit[0]);
+                date.setFullYear(parseInt(dateSplit[2]));
+                date.setMonth(parseInt(dateSplit[1])-1);
+                date.setDate(parseInt(dateSplit[0]));
 
                 // Push grade to array
                 returnBuilder[subject.Przedmiot].grades.push({
