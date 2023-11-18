@@ -1,7 +1,7 @@
 import makeFetchCookie from 'fetch-cookie';
 import { parse } from 'node-html-parser';
 import { AlreadyLoggedInError, NotLoggedInError, WrongCredentialsError } from './errors.js';
-import { StudentGuardian, StudentInfo } from './student.js';
+import { StudentGuardian, StudentInfo, StudentInfoRepsonse } from './student.js';
 import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
@@ -278,7 +278,7 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Uczen.mvc/Get", {})).json() as VulcanResponse<any>;
+        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Uczen.mvc/Get", {})).json() as VulcanResponse<StudentInfoRepsonse>;
 
         const studentInfo: StudentInfo = {
             name: resp.data.Imie,
