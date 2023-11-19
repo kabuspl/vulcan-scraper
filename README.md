@@ -4,6 +4,9 @@
 
 Small library to scrape Vulcan e-register
 
+## Documentation/Usage
+Basic documentation is available in this repo's [wiki](https://github.com/kabuspl/vulcan-scraper/wiki).
+
 ## Example
 ```js
 import { VulcanHandler } from "vulcan-scraper";
