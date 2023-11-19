@@ -9,6 +9,7 @@ import { Grades, GradesResponse } from './grades.js';
 import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './classGrades.js';
 import { Exam, ExamsWeekResponse } from './exams.js';
 import { Subject, SubjectResponse } from './subject.js';
+import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -445,5 +446,35 @@ export class VulcanHandler {
         }
 
         return subjectsListBuilder;
+    }
+
+    /**
+     * Get list of completed lessons between two dates.
+     * @param dateStart Get lessons after this date.
+     * @param dateEnd Get lessons before this date.
+     * @param subjectId Subject ID from .getSubjects(). Use -1 to get all subjects. Default is -1.
+     * @returns 
+     */
+    async getCompletedLessons(dateStart: Date = new Date(), dateEnd: Date = new Date(), subjectId: number = -1) {
+        const resp = await this.requestData<CompletedLessonsRepsonse>("POST", "/LekcjeZrealizowane.mvc/GetZrealizowane", {idPrzedmiot: subjectId.toString(), poczatek: dateStart.toISOString().split(".")[0], koniec: dateEnd.toISOString().split(".")[0]});
+
+        const completedLessonsListBuilder: CompletedLesson[] = [];
+
+        for(const day of Object.values(resp.data)) {
+            for(const lesson of day) {
+                completedLessonsListBuilder.push({
+                    id: lesson.IdLekcja,
+                    date: new Date(lesson.Data.replace(" ", "T")+"Z"),
+                    subject: lesson.Przedmiot,
+                    lessonNumber: lesson.NrLekcji,
+                    topic: lesson.Temat,
+                    teacher: lesson.Nauczyciel,
+                    substitution: lesson.Zastepstwo == "Tak",
+                    absence: lesson.Nieobecnosc
+                })
+            }
+        }
+
+        return completedLessonsListBuilder;
     }
 }
