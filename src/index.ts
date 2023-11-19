@@ -427,6 +427,10 @@ export class VulcanHandler {
         return examsListBuilder;
     }
 
+    /**
+     * Get list of subjects.
+     * @returns List of subjects.
+     */
     async getSubjects() {
         const resp = await this.requestData<SubjectResponse[]>("POST", "/LekcjeZrealizowane.mvc/GetPrzedmioty", {});
 
