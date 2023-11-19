@@ -27,6 +27,17 @@ function postJSON(url: string, json: object) {
     });
 }
 
+export interface LoginOptions {
+    /**
+     * Automatically refresh session to prevent logout.
+     *
+     * If set to `true` interval is created that runs VulcanHandler.refreshSession() every 900s (15min), this interval may prevent your app from closing. It is cleared when you call .logout().
+     *
+     * If `false` you need to manually call VulcanHandler.refreshSession() every ~15 minutes but your app will not be prevented from closing.
+     */
+    autoRefresh: boolean
+}
+
 export class VulcanHandler {
     #symbol;
     #schoolSymbol;
@@ -51,7 +62,7 @@ export class VulcanHandler {
     /**
      * Log in to vulcan
      */
-    async login() {
+    async login(options: LoginOptions = { autoRefresh: true }) {
         if(this.#loggedIn) throw new AlreadyLoggedInError();
 
         // Request login page and get url from redirection
@@ -147,7 +158,7 @@ export class VulcanHandler {
         this.#loggedIn = true;
 
         // Refresh session every 900 sec (15 min)
-        this.#refreshSessionInterval = setInterval(()=>{this.refreshSession()}, 900);
+        if(options.autoRefresh) this.#refreshSessionInterval = setInterval(()=>{this.refreshSession()}, 900);
     }
 
     /**
@@ -156,7 +167,7 @@ export class VulcanHandler {
     async logout() {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
-        clearInterval(this.#refreshSessionInterval);
+        if(this.#refreshSessionInterval) clearInterval(this.#refreshSessionInterval);
         await cookieJar.removeAllCookies();
         this.#loggedIn = false;
     }
