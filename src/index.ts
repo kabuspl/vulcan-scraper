@@ -7,6 +7,7 @@ import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
 import { Grades, GradesResponse } from './grades.js';
 import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './classGrades.js';
+import { Exam, ExamsWeekResponse } from './exams.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -25,6 +26,13 @@ function postJSON(url: string, json: object) {
         },
         body: JSON.stringify(json)
     });
+}
+
+function getMonday(d: Date) {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
 }
 
 export interface LoginOptions {
@@ -358,5 +366,63 @@ export class VulcanHandler {
         }
 
         return studentInfo;
+    }
+
+    /**
+     * Get exams for 4 weeks from provided date
+     * @param dateStart Get exams after this date (inclusive). By default set to current day.
+     * @param dateEnd Get exams before this date (inclusive). By default set to `dateStart`.
+     * @param schoolYear Year of the start of the desired school year. If not provided calculated automatically from `date`.
+     */
+    async getExams(dateStart: Date = new Date(), dateEnd: Date = dateStart, schoolYear?: number) {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
+        if(!schoolYear) {
+            // If start date's month is July or before set schoolYear to previous calendar year
+            if(dateStart.getMonth() < 9) {
+                schoolYear = dateStart.getFullYear() - 1;
+            } else { // Otherwise set it to current year
+                schoolYear = dateStart.getFullYear();
+            }
+        }
+
+        const startWeeksMonday = getMonday(dateStart);
+        const endWeeksMonday = getMonday(dateEnd);
+
+        // 604800000 is number of milliseconds in a week
+        const weeksDifference = Math.round((endWeeksMonday.getTime() - startWeeksMonday.getTime()) / 604800000);
+
+        let examsListBuilder: Exam[] = [];
+
+        // Vulcan API returns exams for nearest 4 weeks. If user requested exams for more than 4 weeks we need to split it to several requests.
+        if(weeksDifference >= 4) {
+            // Just set initial examsListBuilder content to output of this method executed recursively with dateStart set to monday 4 weeks away from current dateStart
+            const monday4WeeksAway = getMonday(new Date(dateStart.getTime() + 2419200000))
+            examsListBuilder = await this.getExams(monday4WeeksAway, dateEnd, schoolYear);
+        }
+
+        // Get data from API
+        const resp = await this.requestData<ExamsWeekResponse[]>("POST", "/Sprawdziany.mvc/Get", {data: dateStart.toISOString().split(".")[0], rokSzkolny: schoolYear.toString()});
+
+        // Parse and convert data from Vulcan to better format
+        for(const examsWeek of resp.data) {
+            for(const examsDay of examsWeek.SprawdzianyGroupedByDayList) {
+                const examsDayDate = new Date(examsDay.Data.replace(" ", "T")+"Z");
+                if(examsDayDate < dateStart || examsDayDate > dateEnd) continue;
+                for(const exam of examsDay.Sprawdziany) {
+                    examsListBuilder.push({
+                        subject: exam.Nazwa,
+                        teacher: exam.Pracownik,
+                        date: examsDayDate,
+                        modificationDate: new Date(exam.DataModyfikacji.replace(" ", "T")+"Z"),
+                        description: exam.Opis,
+                        type: exam.Rodzaj,
+                        id: exam.Id
+                    })
+                }
+            }
+        }
+
+        return examsListBuilder;
     }
 }
