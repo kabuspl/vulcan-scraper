@@ -182,7 +182,7 @@ export class VulcanHandler {
     }
 
     /**
-     * 
+     * Request data from Vulcan API.
      * @param endpoint API endpoint.
      * @param method HTTP request method.
      * @param data Data to send. For `POST` it is converted to request body, for `GET` it's sent as query parameters.
