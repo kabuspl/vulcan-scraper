@@ -188,7 +188,7 @@ export class VulcanHandler {
      * @param data Data to send. For `POST` it is converted to request body, for `GET` it's sent as query parameters.
      * @returns Promise that fulfills to JSON returned by server converted to JS object.
      */
-    async requestData(endpoint: string, method: "GET" | "POST", data: {[key: string]: string}) {
+    async requestData<ResponseDataType>(method: "GET" | "POST", endpoint: string, data: {[key: string]: string}) {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         let resp: Response;
@@ -200,7 +200,7 @@ export class VulcanHandler {
             resp = await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+endpoint, data);
         }
 
-        return resp.json();
+        return resp.json() as Promise<VulcanResponse<ResponseDataType>>;
     }
 
     /**
