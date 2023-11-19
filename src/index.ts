@@ -228,7 +228,7 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id })).json() as VulcanResponse<GradesResponse>;
+        const resp = await this.requestData<GradesResponse>("POST", "/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id.toString() });
 
         const returnBuilder: Grades = {}
         // Iterate through every subject and convert it to better data format
@@ -269,7 +269,7 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id })).json() as VulcanResponse<SubjectClassGradesResponse[]>;
+        const resp = await this.requestData<SubjectClassGradesResponse[]>("POST", "/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id.toString() });
 
         const returnBuilder: ClassGrades = {}
         // Iterate through every subject and convert it to better data format
@@ -313,7 +313,7 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/Uczen.mvc/Get", {})).json() as VulcanResponse<StudentInfoRepsonse>;
+        const resp = await this.requestData<StudentInfoRepsonse>("POST", "/Uczen.mvc/Get", {});
 
         const studentInfo: StudentInfo = {
             name: resp.data.Imie,
