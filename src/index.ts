@@ -8,6 +8,7 @@ import { VulcanResponse } from './response.js';
 import { Grades, GradesResponse } from './grades.js';
 import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './classGrades.js';
 import { Exam, ExamsWeekResponse } from './exams.js';
+import { Subject, SubjectResponse } from './subject.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -424,5 +425,21 @@ export class VulcanHandler {
         }
 
         return examsListBuilder;
+    }
+
+    async getSubjects() {
+        const resp = await this.requestData<SubjectResponse[]>("POST", "/LekcjeZrealizowane.mvc/GetPrzedmioty", {});
+
+        const subjectsListBuilder: Subject[] = [];
+
+        for(const subject of resp.data) {
+            if(subject.IdPrzedmiot == -1) continue; // -1 is "subject" representing all subjects ("Wszystkie")
+            subjectsListBuilder.push({
+                id: subject.IdPrzedmiot,
+                name: subject.Nazwa
+            })
+        }
+
+        return subjectsListBuilder;
     }
 }
