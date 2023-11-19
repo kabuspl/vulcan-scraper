@@ -182,6 +182,28 @@ export class VulcanHandler {
     }
 
     /**
+     * 
+     * @param endpoint API endpoint.
+     * @param method HTTP request method.
+     * @param data Data to send. For `POST` it is converted to request body, for `GET` it's sent as query parameters.
+     * @returns Promise that fulfills to JSON returned by server converted to JS object.
+     */
+    async requestData(endpoint: string, method: "GET" | "POST", data: {[key: string]: string}) {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
+        let resp: Response;
+
+        if(method == "GET") {
+            const query = new URLSearchParams(data).toString();
+            resp = await fetchCookie("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+endpoint+"?"+query);
+        } else if(method == "POST") {
+            resp = await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+endpoint, data);
+        }
+
+        return resp.json();
+    }
+
+    /**
      * Gets current period from register.
      * @returns Period object.
      */
