@@ -6,7 +6,7 @@ import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
 import { Grades, GradesResponse } from './grades.js';
-import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './classGrades.js';
+import { ClassGrades, SubjectClassGradesResponse } from './classGrades.js';
 import { Exam, ExamsWeekResponse } from './exams.js';
 import { Subject, SubjectResponse } from './subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
