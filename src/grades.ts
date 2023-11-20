@@ -14,8 +14,8 @@ export interface SubjectGradesResponse {
     OcenyCzastkowe: GradeResponse[],
     ProponowanaOcenaRoczna: string,
     OcenaRoczna: string,
-    ProponowanaOcenaRocznaPunkty: unknown | null,
-    OcenaRocznaPunkty: unknown | null,
+    ProponowanaOcenaRocznaPunkty: unknown | null, // TODO: Figure out type
+    OcenaRocznaPunkty: unknown | null, // TODO: Same as above
     Srednia: number,
     SumaPunktow: string,
     WidocznyPrzedmiot: boolean
