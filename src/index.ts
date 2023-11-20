@@ -10,6 +10,7 @@ import { ClassGrades, SubjectClassGrades, SubjectClassGradesResponse } from './c
 import { Exam, ExamsWeekResponse } from './exams.js';
 import { Subject, SubjectResponse } from './subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
+import { TimetableParser, TimetableResponse } from './timetable.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -476,5 +477,17 @@ export class VulcanHandler {
         }
 
         return completedLessonsListBuilder;
+    }
+
+    /**
+     * Get timetable for a week.
+     * @beta
+     * @param date Date of **Monday** in the desired week. Any other day gets automatically converted to be date of last Monday.
+     * @returns
+     */
+    async getTimetable(date: Date) {
+        const resp = await this.requestData<TimetableResponse>("POST", "/PlanZajec.mvc/Get", {data: getMonday(date).toISOString().split(".")[0]});
+
+        return TimetableParser.parse(resp.data);
     }
 }
