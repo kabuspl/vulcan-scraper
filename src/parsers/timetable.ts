@@ -1,46 +1,10 @@
-import { HTMLElement, parse } from 'node-html-parser';
+import { HTMLElement, parse } from "node-html-parser";
+import { TimetablePeriod } from "../interfaces/local/timetable/timetablePeriod.js";
+import { TimetableVulcan } from "../interfaces/vulcan/timetable/timetable.js";
+import { Timetable } from "../interfaces/local/timetable/timetable.js";
+import { TimetableLesson } from "../interfaces/local/timetable/timetableLesson.js";
 
-export interface TimetableResponse {
-    Data: string,
-    Headers: {
-        Text: string,
-        Width: string,
-        Distinction: boolean,
-        Flex: number
-    }[],
-    Rows: string[][],
-    Additionals: unknown[]
-}
-
-export interface Timetable {
-    periods: TimetablePeriod[],
-    lessons: {
-        [date: string]: TimetableLesson[]
-    }
-}
-
-export interface TimetablePeriod {
-    number: number,
-    start: Date,
-    end: Date
-}
-
-export interface TimetableLesson {
-    period: TimetablePeriod,
-    subject: string,
-    oldSubject?: string,
-    group?: string,
-    room: string,
-    oldRoom?: string,
-    teacher: string,
-    oldTeacher?: string,
-    changes: boolean,
-    cancelled: boolean,
-    moved: boolean,
-    changeDescription?: string
-}
-
-export enum LESSON_INFO {
+enum LESSON_INFO {
     PLANNED = "x-treelabel-ppl",
     COMPLETED = "x-treelabel-rlz",
     CHANGES = "x-treelabel-zas",
@@ -56,7 +20,7 @@ export class TimetableParser {
      * @param timetableResponse timetable data directly from Vulcan
      * @returns parsed timetable
      */
-    static parse(timetableResponse: TimetableResponse) {
+    static parse(timetableResponse: TimetableVulcan) {
         // Create array of dates of days included in the timetable
         const days: string[] = [];
 

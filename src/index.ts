@@ -15,7 +15,8 @@ import { Exam } from './interfaces/local/exams/exam.js';
 import { ExamsWeekVulcan } from './interfaces/vulcan/exams/examsWeek.js';
 import { Subject, SubjectResponse } from './subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
-import { TimetableParser, TimetableResponse } from './timetable.js';
+import { TimetableParser } from './parsers/timetable.js';
+import { TimetableVulcan } from './interfaces/vulcan/timetable/timetable.js';
 
 const cookieJar = new makeFetchCookie.toughCookie.CookieJar();
 const fetchCookie = makeFetchCookie(fetch, cookieJar)
@@ -491,7 +492,7 @@ export class VulcanHandler {
      * @returns
      */
     async getTimetable(date: Date) {
-        const resp = await this.requestData<TimetableResponse>("POST", "/PlanZajec.mvc/Get", {data: getMonday(date).toISOString().split(".")[0]});
+        const resp = await this.requestData<TimetableVulcan>("POST", "/PlanZajec.mvc/Get", {data: getMonday(date).toISOString().split(".")[0]});
 
         return TimetableParser.parse(resp.data);
     }
