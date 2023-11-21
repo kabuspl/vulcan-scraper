@@ -7,7 +7,8 @@ import { StudentGuardian, StudentInfo, StudentInfoRepsonse } from './student.js'
 import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
-import { Grades, GradesResponse } from './grades.js';
+import { Grades } from './interfaces/local/studentGrades/grades.js';
+import { GradesVulcan } from './interfaces/vulcan/studentGrades/grades.js';
 import { ClassGrades, SubjectClassGradesResponse } from './classGrades.js';
 import { Exam, ExamsWeekResponse } from './exams.js';
 import { Subject, SubjectResponse } from './subject.js';
@@ -241,7 +242,7 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await this.requestData<GradesResponse>("POST", "/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id.toString() });
+        const resp = await this.requestData<GradesVulcan>("POST", "/Oceny.mvc/Get", { okres: this.getCurrentPeriod().Id.toString() });
 
         const returnBuilder: Grades = {}
         // Iterate through every subject and convert it to better data format
