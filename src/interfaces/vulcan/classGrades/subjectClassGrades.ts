@@ -1,4 +1,4 @@
-export interface SubjectClassGradesResponse {
+export interface SubjectClassGradesVulcan {
     Subject: string,
     IsAverage: boolean,
     TableContent: string,
@@ -18,20 +18,4 @@ export interface SubjectClassGradesResponse {
             Value: number
         }[]
     }
-}
-
-export interface ClassGrades {
-    [subject: string]: SubjectClassGrades
-}
-
-export interface SubjectClassGrades {
-    grades: {
-        1: number,
-        2: number,
-        3: number,
-        4: number,
-        5: number,
-        6: number
-    },
-    average: number
 }

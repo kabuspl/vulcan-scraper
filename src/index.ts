@@ -9,7 +9,8 @@ import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
 import { Grades } from './interfaces/local/studentGrades/grades.js';
 import { GradesVulcan } from './interfaces/vulcan/studentGrades/grades.js';
-import { ClassGrades, SubjectClassGradesResponse } from './classGrades.js';
+import { ClassGrades } from './interfaces/local/classGrades/classGrades.js';
+import { SubjectClassGradesVulcan } from './interfaces/vulcan/classGrades/subjectClassGrades.js';
 import { Exam, ExamsWeekResponse } from './exams.js';
 import { Subject, SubjectResponse } from './subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
@@ -283,7 +284,7 @@ export class VulcanHandler {
         if(!this.#loggedIn) throw new NotLoggedInError();
 
         // Get data from vulcan
-        const resp = await this.requestData<SubjectClassGradesResponse[]>("POST", "/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id.toString() });
+        const resp = await this.requestData<SubjectClassGradesVulcan[]>("POST", "/Statystyki.mvc/GetOcenyCzastkowe", { idOkres: this.getCurrentPeriod().Id.toString() });
 
         const returnBuilder: ClassGrades = {}
         // Iterate through every subject and convert it to better data format
