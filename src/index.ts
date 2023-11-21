@@ -11,7 +11,8 @@ import { Grades } from './interfaces/local/studentGrades/grades.js';
 import { GradesVulcan } from './interfaces/vulcan/studentGrades/grades.js';
 import { ClassGrades } from './interfaces/local/classGrades/classGrades.js';
 import { SubjectClassGradesVulcan } from './interfaces/vulcan/classGrades/subjectClassGrades.js';
-import { Exam, ExamsWeekResponse } from './exams.js';
+import { Exam } from './interfaces/local/exams/exam.js';
+import { ExamsWeekVulcan } from './interfaces/vulcan/exams/examsWeek.js';
 import { Subject, SubjectResponse } from './subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
 import { TimetableParser, TimetableResponse } from './timetable.js';
@@ -409,7 +410,7 @@ export class VulcanHandler {
         }
 
         // Get data from API
-        const resp = await this.requestData<ExamsWeekResponse[]>("POST", "/Sprawdziany.mvc/Get", {data: dateStart.toISOString().split(".")[0], rokSzkolny: schoolYear.toString()});
+        const resp = await this.requestData<ExamsWeekVulcan[]>("POST", "/Sprawdziany.mvc/Get", {data: dateStart.toISOString().split(".")[0], rokSzkolny: schoolYear.toString()});
 
         // Parse and convert data from Vulcan to better format
         for(const examsWeek of resp.data) {
