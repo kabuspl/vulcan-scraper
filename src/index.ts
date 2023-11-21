@@ -13,7 +13,8 @@ import { ClassGrades } from './interfaces/local/classGrades/classGrades.js';
 import { SubjectClassGradesVulcan } from './interfaces/vulcan/classGrades/subjectClassGrades.js';
 import { Exam } from './interfaces/local/exams/exam.js';
 import { ExamsWeekVulcan } from './interfaces/vulcan/exams/examsWeek.js';
-import { Subject, SubjectResponse } from './subject.js';
+import { Subject } from './interfaces/local/subjects/subject.js';
+import { SubjectVulcan } from './interfaces/vulcan/subjects/subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
 import { TimetableParser } from './parsers/timetable.js';
 import { TimetableVulcan } from './interfaces/vulcan/timetable/timetable.js';
@@ -440,7 +441,7 @@ export class VulcanHandler {
      * @returns List of subjects.
      */
     async getSubjects() {
-        const resp = await this.requestData<SubjectResponse[]>("POST", "/LekcjeZrealizowane.mvc/GetPrzedmioty", {});
+        const resp = await this.requestData<SubjectVulcan[]>("POST", "/LekcjeZrealizowane.mvc/GetPrzedmioty", {});
 
         const subjectsListBuilder: Subject[] = [];
 
