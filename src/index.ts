@@ -1,6 +1,8 @@
 import makeFetchCookie from 'fetch-cookie';
 import { parse } from 'node-html-parser';
-import { AlreadyLoggedInError, NotLoggedInError, WrongCredentialsError } from './errors.js';
+import { AlreadyLoggedInError } from './errors/alreadyLoggedIn.js';
+import { NotLoggedInError } from './errors/notLoggedIn.js';
+import { WrongCredentialsError } from './errors/wrongCredentials.js';
 import { StudentGuardian, StudentInfo, StudentInfoRepsonse } from './student.js';
 import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
