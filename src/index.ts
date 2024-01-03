@@ -102,7 +102,7 @@ export class VulcanHandler {
         // Extract values from html form fields
         const wa = loginStep1ParsedDom.querySelector("[name='wa']").getAttribute("value");
         let wresult = loginStep1ParsedDom.querySelector("[name='wresult']").getAttribute("value");
-        const wctx = loginStep1ParsedDom.querySelector("[name='wctx']").getAttribute("value");
+        let wctx = loginStep1ParsedDom.querySelector("[name='wctx']").getAttribute("value");
 
         // POST extracted values to form action url
         const loginStep2Request = await fetchCookie(loginStep1ParsedDom.querySelector("form").getAttribute("action"), {
@@ -119,6 +119,7 @@ export class VulcanHandler {
 
         // Get new wresult value. Other values are the same
         wresult = loginStep2ParsedDom.querySelector("[name='wresult']").getAttribute("value");
+        wctx = loginStep2ParsedDom.querySelector("[name='wctx']").getAttribute("value");
 
         // POST extracted values to form action url once again
         const loginFinalStepRequest = await fetchCookie(loginStep2ParsedDom.querySelector("form").getAttribute("action"), {
@@ -136,6 +137,29 @@ export class VulcanHandler {
         //Extract school symbol from html
         const schoolSymbol = loginFinalStepParsedDom.querySelector("a[title='Uczeń']").getAttribute("href").split("/")[4];
         this.#schoolSymbol = schoolSymbol;
+
+        const efebLoginStep1Request = await fetchCookie("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/LoginEndpoint.aspx", {
+            method: "POST",
+            body: new URLSearchParams({
+                LoginName: this.#username,
+                Password: this.#password
+            })
+        });
+
+        const efebLoginStep1ParsedDom = parse(await efebLoginStep1Request.text());
+
+        wresult = efebLoginStep1ParsedDom.querySelector("[name='wresult']").getAttribute("value");
+        wctx = efebLoginStep1ParsedDom.querySelector("[name='wctx']").getAttribute("value");
+
+        // This request is only made to get cookies
+        const efebLoginFinalStepRequest = await fetchCookie(efebLoginStep1ParsedDom.querySelector("form").getAttribute("action"), {
+            method: "POST",
+            body: new URLSearchParams({
+                wa,
+                wresult,
+                wctx
+            })
+        });
 
         // Get register list
         const registerList = await (await postJSON("https://uonetplus-uczen.vulcan.net.pl/"+this.#symbol+"/"+this.#schoolSymbol+"/UczenDziennik.mvc/Get", {})).json() as VulcanResponse<RegisterResponse>;
