@@ -29,3 +29,6 @@ Output:
   'Projektowanie baz danych': { average: 4.5, grades: [ [Object], [Object] ] }
 }
 ```
+
+## Limitations
+- Currently this library only supports standard login type
