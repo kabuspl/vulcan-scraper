@@ -251,6 +251,9 @@ export class VulcanHandler {
                 average: subject.Srednia,
                 grades: []
             }
+            if(subject.ProponowanaOcenaRoczna) returnBuilder[subject.Przedmiot].proposedSemestralGrade = subject.ProponowanaOcenaRoczna;
+            if(subject.OcenaRoczna) returnBuilder[subject.Przedmiot].semestralGrade = subject.OcenaRoczna;
+
             for(const grade of grades) {
                 // Convert dd.mm.yyyy to js Date()
                 const dateSplit = grade.DataOceny.split(".");

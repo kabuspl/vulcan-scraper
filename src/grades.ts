@@ -12,8 +12,8 @@ export interface SubjectGradesResponse {
     Przedmiot: string,
     Pozycja: number,
     OcenyCzastkowe: GradeResponse[],
-    ProponowanaOcenaRoczna: string,
-    OcenaRoczna: string,
+    ProponowanaOcenaRoczna: string | null,
+    OcenaRoczna: string | null,
     ProponowanaOcenaRocznaPunkty: unknown | null, // TODO: Figure out type
     OcenaRocznaPunkty: unknown | null, // TODO: Same as above
     Srednia: number,
@@ -37,6 +37,8 @@ export interface Grades {
 
 export interface SubjectGrades {
     average: number,
+    proposedSemestralGrade?: string,
+    semestralGrade?: string
     grades: Grade[]
 }
 
