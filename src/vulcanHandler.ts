@@ -6,7 +6,7 @@ import { URLSearchParams } from "url";
 import { PeriodResponse, RegisterResponse } from './register.js';
 import { VulcanResponse } from './response.js';
 import { Grades, GradesResponse } from './grades.js';
-import { ClassGrades, SubjectClassGradesResponse } from './classGrades.js';
+import { ClassGrades, SubjectClassGradesResponse, SubjectClassSemestralGradesResponse } from './classGrades.js';
 import { Exam, ExamsWeekResponse } from './exams.js';
 import { Subject, SubjectResponse } from './subject.js';
 import { CompletedLesson, CompletedLessonsRepsonse } from './completedLessons.js';
@@ -315,6 +315,47 @@ export class VulcanHandler {
                         6: classSeries.Items[0].Value
                     },
                     average: parseFloat(classSeries.Average) // For some reason average is returned as string so we need to convert it
+                }
+            }
+        }
+        return returnBuilder;
+    }
+
+    /**
+     * Gets class semestral grades for current period (semester)
+     * @returns Class semestral grades
+     */
+    async getClassSemestralGrades() {
+        if(!this.#loggedIn) throw new NotLoggedInError();
+
+        // Get data from vulcan
+        const resp = await this.requestData<SubjectClassSemestralGradesResponse[]>("POST", "/Statystyki.mvc/GetOcenyRoczne", { idOkres: this.getCurrentPeriod().Id.toString() });
+
+        const returnBuilder: ClassGrades = {}
+        // Iterate through every subject and convert it to better data format
+        for(const subject of resp.data) {
+            if(subject.IsEmpty) {
+                // If no grades were returned set them to 0
+                returnBuilder[subject.Subject] = {
+                    grades: {
+                        1: 0,
+                        2: 0,
+                        3: 0,
+                        4: 0,
+                        5: 0,
+                        6: 0
+                    }
+                }
+            } else {
+                returnBuilder[subject.Subject] = {
+                    grades: {
+                        1: subject.Items[5].Value,
+                        2: subject.Items[4].Value,
+                        3: subject.Items[3].Value,
+                        4: subject.Items[2].Value,
+                        5: subject.Items[1].Value,
+                        6: subject.Items[0].Value
+                    }
                 }
             }
         }

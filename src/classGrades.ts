@@ -20,6 +20,17 @@ export interface SubjectClassGradesResponse {
     }
 }
 
+export interface SubjectClassSemestralGradesResponse {
+    Subject: string,
+    IsEmpty: boolean,
+    TableContent: string,
+    Items: {
+        Label: string,
+        Value: number,
+        Description: string
+    }[]
+}
+
 export interface ClassGrades {
     [subject: string]: SubjectClassGrades
 }
@@ -33,5 +44,5 @@ export interface SubjectClassGrades {
         5: number,
         6: number
     },
-    average: number
+    average?: number
 }
